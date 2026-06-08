@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ExifFrame</title>
+  <link rel="stylesheet" href="app.css">
+  <script src="vendor/exifr.full.umd.js" defer></script>
+  <script src="vendor/piexif.js" defer></script>
+  <script src="vendor/jszip.min.js" defer></script>
+  <script src="vendor/lucide.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><i data-lucide="aperture"></i></div>
+        <div>
+          <h1>ExifFrame</h1>
+          <p>Canvas frame maker</p>
+        </div>
+      </div>
+
+      <label class="dropzone" id="dropzone">
+        <input id="fileInput" type="file" accept="image/*" multiple>
+        <span>
+          <i data-lucide="image-plus"></i>
+          <strong>사진을 놓거나 선택</strong>
+          <span>JPG, PNG, WebP</span>
+        </span>
+      </label>
+
+      <section class="section">
+        <div class="section-title">Frame</div>
+        <label class="checkbox"><input id="instagramOptimize" type="checkbox" checked> 인스타 최적화 1080px</label>
+        <div class="field">
+          <label for="ratioPreset">비율</label>
+          <select class="control" id="ratioPreset">
+            <option value="1:1">1:1 Square</option>
+            <option value="4:5" selected>4:5 Portrait</option>
+            <option value="16:9">16:9 Wide</option>
+            <option value="3:2">3:2 Photo</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="custom-ratio" id="customRatioBox" hidden>
+          <input id="customW" type="number" min="1" max="99" value="4" aria-label="가로 비율">
+          <span>:</span>
+          <input id="customH" type="number" min="1" max="99" value="5" aria-label="세로 비율">
+        </div>
+        <div class="inline-grid">
+          <div class="field">
+            <label for="outputWidth">가로 px</label>
+            <input class="control" id="outputWidth" type="number" min="400" max="4096" step="10" value="1080">
+          </div>
+          <div class="field">
+            <label for="quality">품질</label>
+            <input class="control" id="quality" type="number" min="50" max="100" step="1" value="92">
+          </div>
+        </div>
+        <div class="field">
+          <label for="padding">사진 여백</label>
+          <div class="range-row">
+            <input id="padding" type="range" min="0" max="18" value="6">
+            <span class="mini-label"><b id="paddingValue">6</b>%</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">Background</div>
+        <div class="segmented" id="bgMode">
+          <button type="button" data-mode="solid" class="active">Solid</button>
+          <button type="button" data-mode="blur">Blur</button>
+          <button type="button" data-mode="auto">Auto</button>
+        </div>
+        <div class="swatches" id="swatches">
+          <button type="button" class="swatch active" data-color="#ffffff" style="background:#ffffff" title="White"></button>
+          <button type="button" class="swatch" data-color="#111111" style="background:#111111" title="Black"></button>
+          <button type="button" class="swatch" data-color="#f2eee6" style="background:#f2eee6" title="Warm"></button>
+          <button type="button" class="swatch" data-color="#d8e0d2" style="background:#d8e0d2" title="Sage"></button>
+          <input class="control" id="colorPicker" type="color" value="#ffffff" title="Custom color">
+        </div>
+        <div class="field">
+          <label for="blurAmount">블러</label>
+          <div class="range-row">
+            <input id="blurAmount" type="range" min="4" max="52" value="26">
+            <span class="mini-label"><b id="blurValue">26</b>px</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">Caption</div>
+        <label class="checkbox"><input id="exifEnabled" type="checkbox" checked> EXIF 프레임</label>
+        <div class="field">
+          <label for="fontScale">글자 크기</label>
+          <div class="range-row">
+            <input id="fontScale" type="range" min="70" max="130" value="100">
+            <span class="mini-label"><b id="fontValue">100</b>%</span>
+          </div>
+        </div>
+        <label class="checkbox"><input id="sharpen" type="checkbox"> 미세 선명도</label>
+      </section>
+
+      <section class="section">
+        <div class="section-title">Metadata</div>
+        <label class="checkbox"><input id="preserveExif" type="checkbox" checked> 원본 EXIF 보존</label>
+        <div class="field">
+          <label for="metadataNote">설명 문구</label>
+          <textarea class="control textarea" id="metadataNote" rows="3">Edited with ExifFrame.</textarea>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button class="primary" id="downloadBtn" type="button"><i data-lucide="download"></i> 저장</button>
+        <button class="secondary" id="zipBtn" type="button"><i data-lucide="archive"></i> ZIP</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="toolbar">
+        <div class="status">
+          <strong id="statusTitle">프레임 대기 중</strong>
+          <span id="statusMeta">브라우저 안에서만 처리됩니다.</span>
+        </div>
+        <div class="tool-buttons">
+          <button class="icon-btn" id="prevBtn" type="button" title="이전"><i data-lucide="chevron-left"></i></button>
+          <button class="icon-btn" id="nextBtn" type="button" title="다음"><i data-lucide="chevron-right"></i></button>
+          <button class="icon-btn" id="clearBtn" type="button" title="비우기"><i data-lucide="trash-2"></i></button>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <div class="preview-wrap" id="previewWrap">
+          <canvas id="canvas" hidden></canvas>
+        </div>
+        <aside class="queue">
+          <div class="queue-header">
+            <strong>Queue</strong>
+            <span class="mini-label" id="queueCount">0 files</span>
+          </div>
+          <div class="queue-list" id="queueList"></div>
+        </aside>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+
+</body>
+</html>
